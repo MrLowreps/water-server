@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>クリクラ基準 乗り換え比較</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: one column. Input panel on top, then a summary strip, then the ranked list with bars measured against the Kurikura baseline line. */
+:root{
+  --bg:#eef2f4; --surface:#ffffff; --ink:#14232c; --muted:#5b6d78; --line:#d4dde2;
+  --accent:#0a6f8f; --accent-soft:#d8ecf2;
+  --good:#1b7a4b; --good-soft:#dcf1e5; --bad:#b0412e; --bad-soft:#f7e1dc;
+  --bar:#9fbfcc; --base:#14232c;
+  --f-display:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif;
+  --f-body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif;
+  --f-num:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e171c; --surface:#16232a; --ink:#e3ecf0; --muted:#93a7b2; --line:#2a3b44;
+  --accent:#5cc0de; --accent-soft:#16384a;
+  --good:#5fd197; --good-soft:#163828; --bad:#f08a74; --bad-soft:#3d2019;
+  --bar:#3b6576; --base:#e3ecf0; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0e171c; --surface:#16232a; --ink:#e3ecf0; --muted:#93a7b2; --line:#2a3b44;
+  --accent:#5cc0de; --accent-soft:#16384a;
+  --good:#5fd197; --good-soft:#163828; --bad:#f08a74; --bad-soft:#3d2019;
+  --bar:#3b6576; --base:#e3ecf0; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6}
+.wrap{max-width:880px;margin:0 auto;padding-inline:16px;padding-block:24px 48px;display:flex;flex-direction:column;gap:20px}
+h1{font-family:var(--f-display);font-weight:900;font-size:1.6rem;line-height:1.3;margin:0;text-wrap:balance;letter-spacing:.01em}
+.lead{color:var(--muted);margin:4px 0 0;max-width:62ch}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:16px}
+.panel h2{font-size:.78rem;letter-spacing:.12em;color:var(--muted);margin:0;font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field label{font-weight:700;font-size:.9rem}
+.field .hint{font-size:.78rem;color:var(--muted)}
+.inrow{display:flex;align-items:center;gap:8px}
+input[type=number],select{font:inherit;font-family:var(--f-num);font-size:1.1rem;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);width:100%;min-width:0}
+select{font-family:var(--f-body);font-size:.95rem}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.unit{color:var(--muted);font-size:.9rem;white-space:nowrap}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;font-size:.85rem;padding:4px 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+.chip[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--surface);font-weight:700}
+.check{display:flex;align-items:center;gap:8px;font-size:.9rem;cursor:pointer}
+.check input{width:18px;height:18px;accent-color:var(--accent)}
+.example{font-size:.78rem;color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:6px 10px}
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.stat{padding:12px 14px;border-left:3px solid var(--line)}
+.stat.base{border-color:var(--base)} .stat.good{border-color:var(--good)}
+.stat .k{font-size:.78rem;color:var(--muted);letter-spacing:.06em}
+.stat .v{font-family:var(--f-num);font-variant-numeric:tabular-nums;font-size:1.45rem;font-weight:600;line-height:1.3}
+.stat .s{font-size:.82rem;color:var(--muted)}
+.list{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.listhead{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--line);font-size:.85rem;color:var(--muted)}
+.row{display:grid;grid-template-columns:2rem 1fr auto;gap:4px 10px;padding:12px 16px;border-bottom:1px solid var(--line);align-items:start}
+.row:last-child{border-bottom:none}
+.row.kuri{background:var(--accent-soft)}
+.rank{font-family:var(--f-num);color:var(--muted);font-size:.9rem;padding-top:2px}
+.name{font-weight:700;min-width:0}
+.co{color:var(--accent);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
+.co:hover{text-decoration-thickness:2px}
+.tag{display:inline-block;font-size:.7rem;font-weight:500;padding:1px 7px;border-radius:4px;border:1px solid var(--line);color:var(--muted);margin-left:6px;vertical-align:2px;white-space:nowrap}
+.right{text-align:right}
+.total{font-family:var(--f-num);font-variant-numeric:tabular-nums;font-weight:600;font-size:1.05rem}
+.diff{font-family:var(--f-num);font-variant-numeric:tabular-nums;font-size:.85rem;font-weight:600;padding:1px 6px;border-radius:4px;display:inline-block;margin-top:2px}
+.diff.good{color:var(--good);background:var(--good-soft)} .diff.bad{color:var(--bad);background:var(--bad-soft)} .diff.even{color:var(--muted)}
+.barcell{grid-column:2 / 4;position:relative;height:8px;margin-top:4px}
+.bar{position:absolute;left:0;top:0;height:8px;border-radius:2px;background:var(--bar)}
+.bar.good{background:var(--good)}
+.baseline{position:absolute;top:-4px;width:2px;height:16px;background:var(--base)}
+.detail{grid-column:2 / 4;font-size:.8rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:2px 14px}
+.detail b{font-weight:500;color:var(--ink);font-family:var(--f-num)}
+.warn{color:var(--bad)}
+.notes{font-size:.82rem;color:var(--muted);display:grid;gap:6px}
+.notes p{margin:0;max-width:72ch}
+.notes a{color:var(--accent)}
+@media (prefers-reduced-motion:no-preference){.bar{transition:width .25s ease}}
+</style>
+
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>クリクラ基準 乗り換え比較</h1>
+    <p class="lead">いまのクリクラの月の水量と支払額を入れると、同じ水量で各社を使った場合の合計額と、クリクラとの差額を計算します。</p>
+  </header>
+
+  <section class="panel" aria-labelledby="h-in">
+    <h2 id="h-in">クリクラの利用状況</h2>
+    <div class="grid">
+      <div class="field">
+        <label for="vol">月の水量</label>
+        <div class="inrow"><input id="vol" type="number" min="0" step="1" inputmode="decimal"><span class="unit">L / 月</span></div>
+        <div class="chips" id="volchips"></div>
+        <span class="hint">12Lボトル1本 = 12L</span>
+      </div>
+      <div class="field">
+        <label for="plan">クリクラのプラン</label>
+        <select id="plan">
+          <option value="manual">支払額を手入力する</option>
+          <option value="1620">超お得プラン(12L 1,620円)</option>
+          <option value="1620n">のりかえプラン(12L 1,620円)</option>
+          <option value="1670">お得スタートプラン(12L 1,670円)</option>
+          <option value="1750">ベーシックプラン(12L 1,750円)</option>
+        </select>
+        <span class="hint">プランを選ぶと「ボトル代+あんしんサポートパック460円」で支払額を自動計算します</span>
+      </div>
+      <div class="field">
+        <label for="amt">月の支払額(電気代を除く)</label>
+        <div class="inrow"><input id="amt" type="number" min="0" step="10" inputmode="numeric"><span class="unit">円 / 月</span></div>
+        <span class="hint">請求書の金額(ボトル代+サポートパック等)</span>
+      </div>
+      <div class="field">
+        <label for="elec">クリクラの電気代</label>
+        <div class="inrow"><input id="elec" type="number" min="0" step="10" inputmode="numeric"><span class="unit">円 / 月</span></div>
+        <span class="hint">クリクラFit・サーバーL/Sの目安は約1,000円</span>
+      </div>
+    </div>
+
+    <h2>比較のしかた</h2>
+    <div class="grid">
+      <div class="field">
+        <span id="lbl-period" style="font-weight:700;font-size:.9rem">比較期間</span>
+        <div class="chips" role="group" aria-labelledby="lbl-period" id="periodchips"></div>
+        <span class="hint">1年・3年は各社の初期費用とクリクラ解約金を含めます</span>
+      </div>
+      <div class="field">
+        <span id="lbl-type" style="font-weight:700;font-size:.9rem">表示するタイプ</span>
+        <div class="chips" role="group" aria-labelledby="lbl-type" id="typechips"></div>
+      </div>
+      <div class="field">
+        <label for="cancel">クリクラの解約金</label>
+        <div class="inrow"><input id="cancel" type="number" min="0" step="100" inputmode="numeric"><span class="unit">円</span></div>
+        <span class="hint">契約期間内に乗り換える場合のみ。ベーシックプランは0円</span>
+      </div>
+      <div class="field" style="justify-content:center">
+        <label class="check"><input id="incElec" type="checkbox"> 電気代を含めて比較する</label>
+      </div>
+    </div>
+    <div class="example" id="exnote">入力欄には例として「24L/月・超お得プラン」を入れています。ご自身の数字に書き換えてください。</div>
+  </section>
+
+  <section class="summary" aria-label="比較結果の要約" id="summary"></section>
+
+  <section class="list" aria-labelledby="h-list">
+    <div class="listhead"><span id="h-list">各社の合計額(安い順)</span><span id="legend">縦線 = クリクラの基準額</span></div>
+    <div id="rows"></div>
+  </section>
+
+  <section class="notes">
+    <p>計算方法: 水代は「1Lあたり単価 × 月の水量」です。浄水型は水量に関係なく定額です。レンタル料・サポート料は毎月必須の費用を含みます。フレシャスは注文量が一定以上になるとレンタル料が無料になる条件を反映し、コスモ・プレミアム・ワンウェイ・信濃湧水・フレシャスは水量が少ない場合の休止・事務手数料を月平均で加算しています。</p>
+    <p>電気代はメーカー公表のエコモード時の目安です。※印の機種は公表値がないため月800円で仮置きしています。解約金(乗り換え先の最低利用期間内に解約した場合)、離島などの追加送料、キャンペーン割引は含みません。</p>
+    <p>会社名を押すと各社の公式サイト(料金ページ)が開きます。「検索」の付いた会社は公式サイトのURLを確認できなかったため、検索結果が開きます。</p>
+    <p>料金は2026年5〜10月時点の公式サイト・比較サイトの掲載値(税込)です。申し込み前に各社の公式サイトで最新の料金を確認してください。</p>
+  </section>
+</div>
+
+<script>
+(function(){
+// type, perL (円/L, 水代), rental (月), elec (月), elecAssumed, init (初期費用), contract (年),
+// freeAt: このL以上でレンタル無料, minV/fee: このL未満で手数料, fixed: 浄水型の定額
+const D=[
+ {n:"おいしい水の宅配便 Grande(4年)",t:"天然水",perL:2720/24,rental:635,elec:800,ea:1,init:0,c:4,q:"おいしい水の宅配便 ウォーターサーバー 公式"},
+ {n:"うるのん Grande(3年)",t:"天然水",perL:1980/12,rental:330,elec:513,init:0,c:3,u:"https://ulunom.tokai.jp/"},
+ {n:"うるのん スタンダード(3年)",t:"天然水",perL:1980/12,rental:0,elec:1000,init:0,c:3,u:"https://ulunom.tokai.jp/"},
+ {n:"ウォーターワン JL(3年)",t:"天然水",perL:1674/12,rental:509,elec:1060,init:0,c:3,q:"ウォーターワン ウォーターサーバー 公式"},
+ {n:"プレミアムウォーター スリム4(5年)",t:"天然水",perL:4082/25,rental:0,elec:500,init:0,c:5,minV:12.5,fee:880,u:"https://premium-water.net/price/"},
+ {n:"プレミアムウォーター スリム4(3年)",t:"天然水",perL:4190/25,rental:0,elec:500,init:0,c:3,minV:12.5,fee:880,u:"https://premium-water.net/price/"},
+ {n:"信濃湧水 エコサーバー",t:"天然水",perL:1944/11.4,rental:330,elec:470,init:0,c:3,minV:15.2,fee:880,u:"https://www.shinanoyusui.jp/price/"},
+ {n:"ダスキン 森のひとしずく",t:"天然水",perL:2808/22,rental:1100,elec:800,ea:1,init:0,c:1,q:"ダスキン ウォーターサーバー 公式"},
+ {n:"富士の湧水",t:"天然水",perL:3398/24,rental:900,elec:800,ea:1,init:0,c:1,u:"https://www.fujinoyusui.net/water/"},
+ {n:"コスモウォーター smartプラス",t:"天然水",perL:180,rental:0,elec:474,init:0,c:2,minV:12,fee:880,u:"https://www.cosmowater.com/price/"},
+ {n:"コスモウォーター smartプラスNext",t:"天然水",perL:180,rental:0,elec:256,init:2200,c:3,minV:12,fee:880,u:"https://www.cosmowater.com/price/"},
+ {n:"ジャパネット 富士山の天然水",t:"天然水",perL:3480/19,rental:0,elec:560,init:0,c:2,q:"ジャパネット ウォーターサーバー 公式"},
+ {n:"フレシャス dewoⅱ",t:"天然水",perL:1231/7.2,rental:550,freeAt:57.6,elec:330,init:0,c:3,minV:14.4,fee:1100,u:"https://www.frecious.jp/price/"},
+ {n:"フレシャス Slat",t:"天然水",perL:1627/9.3,rental:990,freeAt:55.8,elec:380,init:0,c:3,minV:9.3,fee:1100,u:"https://www.frecious.jp/price/"},
+ {n:"フレシャス Slat+cafe",t:"天然水",perL:1627/9.3,rental:1320,freeAt:55.8,elec:380,init:0,c:3,minV:9.3,fee:1100,u:"https://www.frecious.jp/price/"},
+ {n:"キララウォーター(3年)",t:"天然水",perL:4968/29,rental:1320,elec:800,ea:1,init:0,c:3,q:"キララウォーター ウォーターサーバー 公式"},
+ {n:"ワンウェイウォーター smartプラス",t:"RO水",perL:2700/24,rental:0,elec:474,init:1100,c:2,minV:12,fee:880,q:"ワンウェイウォーター ウォーターサーバー 公式"},
+ {n:"アルピナウォーター エコサーバー",t:"RO水",perL:1436/12,rental:1100,elec:470,init:0,c:3,u:"https://www.alpina-water.co.jp/price/"},
+ {n:"アクアクララ アクア8(2年割)",t:"RO水",perL:1620/12,rental:1100,elec:420,init:0,c:2,u:"https://www.aquaclara.co.jp/service_price/"},
+ {n:"アクアクララ アクアファブ(2年割)",t:"RO水",perL:1620/12,rental:1430,elec:800,init:0,c:2,u:"https://www.aquaclara.co.jp/service_price/"},
+ {n:"ウォーターネット",t:"RO水",perL:1566/12,rental:1210,elec:800,ea:1,init:0,c:0,q:"ウォーターネット ウォーターサーバー 公式"},
+ {n:"Locca litta",t:"浄水型",fixed:2380,elec:469,init:0,c:6,u:"https://locca.jp/"},
+ {n:"ウォータースタンド ピュアライフS",t:"浄水型",fixed:2530,elec:627,init:0,c:5,u:"https://waterstand.jp/products/"},
+ {n:"ウォータースタンド ピュアライフL",t:"浄水型",fixed:2860,elec:462,init:0,c:5,u:"https://waterstand.jp/products/"},
+ {n:"エブリィフレシャス lite",t:"浄水型",fixed:2750,elec:623,init:0,c:3,u:"https://every.frecious.jp/"},
+ {n:"エブリィフレシャス tall",t:"浄水型",fixed:3300,elec:360,init:0,c:3,u:"https://every.frecious.jp/"},
+ {n:"エブリィフレシャス mini",t:"浄水型",fixed:3300,elec:453,init:0,c:3,u:"https://every.frecious.jp/"},
+ {n:"エブリィフレシャス tall+cafe",t:"浄水型",fixed:3850,elec:401,init:0,c:3,u:"https://every.frecious.jp/"},
+ {n:"Locca Slim-RⅡ",t:"浄水型",fixed:2900,elec:567,init:0,c:6,u:"https://locca.jp/"},
+ {n:"ハミングウォーター flows",t:"浄水型",fixed:3410,elec:475,init:0,c:2,u:"https://humming-water.com/"},
+ {n:"シャインウォーター",t:"浄水型",fixed:3300,elec:800,ea:1,init:0,c:2,q:"シャインウォーター ウォーターサーバー 公式"},
+ {n:"クリクラ feel free putio(浄水型)",t:"浄水型",fixed:3140,elec:1421,init:0,c:5,u:"https://www.crecla.jp/price/"},
+];
+const PERIODS=[{k:1,l:"月額"},{k:12,l:"1年"},{k:36,l:"3年"}];
+const TYPES=["すべて","天然水","RO水","浄水型"];
+const VOLS=[12,24,36,48];
+const $=id=>document.getElementById(id);
+const yen=v=>Math.round(v).toLocaleString("ja-JP")+"円";
+const DEF={vol:24,plan:"1620",amt:3700,elec:1000,cancel:0,incElec:true,period:1,type:"すべて"};
+let S=Object.assign({},DEF);
+try{const s=JSON.parse(localStorage.getItem("kurikura-hikaku")||"null");if(s&&typeof s==="object")S=Object.assign(S,s)}catch(e){}
+const save=()=>{try{localStorage.setItem("kurikura-hikaku",JSON.stringify(S))}catch(e){}};
+
+function chips(el,items,cur,label,onPick){
+  el.innerHTML="";
+  items.forEach(it=>{const b=document.createElement("button");b.type="button";b.className="chip";
+    b.textContent=label(it);b.setAttribute("aria-pressed",String(it===cur||(it&&it.k!==undefined&&it.k===cur)));
+    b.addEventListener("click",()=>onPick(it));el.appendChild(b)});
+}
+function planAmount(){ if(S.plan==="manual")return null; const p=parseInt(S.plan,10); return Math.round(S.vol/12*p+460); }
+
+function monthly(d,V){
+  if(d.fixed!==undefined) return {water:0,rental:d.fixed,fee:0};
+  const rental=(d.freeAt&&V>=d.freeAt)?0:d.rental;
+  const fee=(d.minV&&V<d.minV)?d.fee:0;
+  return {water:d.perL*V,rental,fee};
+}
+
+function render(){
+  const V=Math.max(0,+S.vol||0), M=S.period, inc=S.incElec;
+  const pa=planAmount(); if(pa!==null){S.amt=pa;$("amt").value=pa}
+  $("amt").readOnly = pa!==null;
+  const kMonth=(+S.amt||0)+(inc?(+S.elec||0):0);
+  const kTotal=kMonth*M;
+  const oneTime = M>1 ? (+S.cancel||0) : 0;
+  const rows=D.filter(d=>S.type==="すべて"||d.t===S.type).map(d=>{
+    const m=monthly(d,V); const e=inc?d.elec:0;
+    const mon=m.water+m.rental+m.fee+e;
+    const tot=mon*M+(M>1?d.init+oneTime:0);
+    return {d,m,e,mon,tot,diff:tot-kTotal};
+  }).sort((a,b)=>a.tot-b.tot);
+  const pl=PERIODS.find(p=>p.k===M).l;
+  const cheaper=rows.filter(r=>r.diff<-0.5);
+  const best=rows[0];
+  $("summary").innerHTML=
+    `<div class="stat base"><div class="k">クリクラの基準額(${pl})</div><div class="v">${yen(kTotal)}</div><div class="s">${V}L/月・${inc?"電気代込み":"電気代除く"}</div></div>`+
+    `<div class="stat good"><div class="k">クリクラより安い機種</div><div class="v">${cheaper.length} / ${rows.length}</div><div class="s">${S.type==="すべて"?"全タイプ":S.type}で比較</div></div>`+
+    (best?`<div class="stat ${best.diff<0?'good':''}"><div class="k">最安の機種</div><div class="v">${yen(best.tot)}</div><div class="s">${best.d.n}(${best.diff<0?"−"+yen(-best.diff):"+"+yen(best.diff)})</div></div>`:"");
+  const max=Math.max(kTotal,...rows.map(r=>r.tot))||1;
+  const basePct=kTotal/max*100;
+  let html=`<div class="row kuri"><span class="rank">基準</span><span class="name"><a class="co" href="https://www.crecla.jp/price/" target="_blank" rel="noopener">クリクラ(いまの契約)</a></span><span class="right"><span class="total">${yen(kTotal)}</span></span>
+    <div class="barcell"><div class="bar" style="width:${basePct}%;background:var(--base)"></div></div>
+    <div class="detail"><span>支払額 <b>${yen(+S.amt||0)}</b>/月</span>${inc?`<span>電気代 <b>${yen(+S.elec||0)}</b>/月</span>`:""}</div></div>`;
+  rows.forEach((r,i)=>{
+    const d=r.d, g=r.diff<-0.5, b=r.diff>0.5;
+    const dt=g?`<span class="diff good">−${yen(-r.diff)}</span>`:b?`<span class="diff bad">+${yen(r.diff)}</span>`:`<span class="diff even">±0円</span>`;
+    const parts=[];
+    if(d.fixed!==undefined) parts.push(`定額 <b>${yen(d.fixed)}</b>/月(水量無制限)`);
+    else { parts.push(`水代 <b>${yen(r.m.water)}</b>/月`); parts.push(`レンタル・サポート <b>${yen(r.m.rental)}</b>${d.freeAt&&r.m.rental===0?"(条件達成で無料)":""}`);
+      if(r.m.fee) parts.push(`<span class="warn">少量手数料 <b>${yen(r.m.fee)}</b></span>`); }
+    if(inc) parts.push(`電気代 <b>${yen(d.elec)}</b>${d.ea?"※":""}`);
+    if(M>1&&d.init) parts.push(`初期費用 <b>${yen(d.init)}</b>`);
+    if(d.c) parts.push(`最低利用期間 ${d.c}年${M/12<d.c?'<span class="warn">(期間内の解約は解約金あり)</span>':''}`); else parts.push("契約期間なし");
+    html+=`<div class="row"><span class="rank">${i+1}</span><span class="name"><a class="co" href="${d.u||("https://www.google.com/search?q="+encodeURIComponent(d.q))}" target="_blank" rel="noopener">${d.n}</a><span class="tag">${d.t}</span>${d.u?"":'<span class="tag">検索</span>'}</span>
+      <span class="right"><span class="total">${yen(r.tot)}</span><br>${dt}</span>
+      <div class="barcell"><div class="bar ${g?'good':''}" style="width:${r.tot/max*100}%"></div><div class="baseline" style="left:calc(${basePct}% - 1px)"></div></div>
+      <div class="detail">${parts.map(p=>`<span>${p}</span>`).join("")}</div></div>`;
+  });
+  $("rows").innerHTML=html;
+  $("legend").textContent=`${pl}の合計・縦線 = クリクラの基準額`;
+  const isDef=S.vol===DEF.vol&&S.plan===DEF.plan&&S.elec===DEF.elec;
+  $("exnote").hidden=!isDef;
+  chips($("volchips"),VOLS,+S.vol,v=>v+"L",v=>{S.vol=v;$("vol").value=v;save();render()});
+  chips($("periodchips"),PERIODS,M,p=>p.l,p=>{S.period=p.k;save();render()});
+  chips($("typechips"),TYPES,S.type,t=>t,t=>{S.type=t;save();render()});
+}
+$("vol").value=S.vol;$("plan").value=S.plan;$("amt").value=S.amt;$("elec").value=S.elec;$("cancel").value=S.cancel;$("incElec").checked=S.incElec;
+$("vol").addEventListener("input",e=>{S.vol=+e.target.value||0;save();render()});
+$("plan").addEventListener("change",e=>{S.plan=e.target.value;save();render()});
+$("amt").addEventListener("input",e=>{S.amt=+e.target.value||0;save();render()});
+$("elec").addEventListener("input",e=>{S.elec=+e.target.value||0;save();render()});
+$("cancel").addEventListener("input",e=>{S.cancel=+e.target.value||0;save();render()});
+$("incElec").addEventListener("change",e=>{S.incElec=e.target.checked;save();render()});
+render();
+})();
+</script>
+</body>
+</html>
